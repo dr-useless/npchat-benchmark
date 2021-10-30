@@ -8,37 +8,17 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"sync"
 	"time"
 )
-
-type Client struct {
-	PrivateKey    *ecdsa.PrivateKey
-	PublicKeyHash string
-	StartTime     time.Time
-	EndTime       time.Time
-	Contact       Contact
-}
 
 type Contact struct {
 	PublicKey     *ecdsa.PublicKey
 	PublicKeyHash string
 }
 
-func (c *Client) Start() {
-	go func() {
-		// get websocket
-
-		// authenticate
-
-		// send messages
-		time.Sleep(time.Second * 5)
-	}()
-}
-
-func main() {
-	// create n clients
-	clients := make([]Client, 20)
-
+func InitClients(clients []Client) []Client {
+	// init keys
 	for i := range clients {
 		pk, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		if err != nil {
@@ -56,27 +36,35 @@ func main() {
 		}
 	}
 
-	// pair clients up
+	// pair them up
 	for i := range clients {
 		var other Client
 		if i%2 == 0 {
 			other = clients[i+1]
 		} else {
 			other = clients[i-1]
+			fmt.Println(clients[i].PublicKeyHash, "paired with", other.PublicKeyHash)
 		}
 		clients[i].Contact = Contact{
 			PublicKey:     &other.PrivateKey.PublicKey,
 			PublicKeyHash: other.PublicKeyHash,
 		}
 	}
+	return clients
+}
 
-	for i, c := range clients {
-		// print out client pairs
-		fmt.Println(i, c.PublicKeyHash, "paired with", c.Contact.PublicKeyHash)
-		if i%2 != 0 {
-			fmt.Println("--------------------------")
-		}
+func main() {
+	opt := GetOptions()
+	clients := InitClients(make([]Client, opt.ClientCount))
+	wg := sync.WaitGroup{}
+	tStart := time.Now()
+	for i := range clients {
 		// start each client
-		c.Start()
+		wg.Add(1)
+		go clients[i].Start(&wg, opt)
 	}
+	wg.Wait()
+	tEnd := time.Now()
+	duration := tEnd.Sub(tStart)
+	log.Println("test ran in", duration.Seconds(), "seconds")
 }
