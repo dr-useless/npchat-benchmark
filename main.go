@@ -55,19 +55,20 @@ func InitClients(clients []Client) []Client {
 
 func main() {
 	opt := GetOptions()
-	clients := InitClients(make([]Client, opt.ClientCount))
-	wg := sync.WaitGroup{}
-	tStart := time.Now()
-	for i := range clients {
-		// start each client
-		wg.Add(1)
-		go clients[i].Start(&wg, opt)
-		// sleep to prevent all clients connecting at once
-		// this is due to an auth issue with go-npchat, which must be solved
-		time.Sleep(time.Millisecond * 500)
+	log.Printf("%+v", opt)
+	for r := 0; r < opt.Repeat; r++ {
+		clients := InitClients(make([]Client, opt.ClientCount))
+		wg := sync.WaitGroup{}
+		tStart := time.Now()
+		for i := range clients {
+			// start each client
+			wg.Add(1)
+			go clients[i].Start(&wg, opt)
+			time.Sleep(time.Millisecond * time.Duration(opt.ClientDelay))
+		}
+		wg.Wait()
+		tEnd := time.Now()
+		duration := tEnd.Sub(tStart)
+		log.Println("ran in", duration.Seconds(), "seconds")
 	}
-	wg.Wait()
-	tEnd := time.Now()
-	duration := tEnd.Sub(tStart)
-	log.Println("ran in", duration.Seconds(), "seconds")
 }

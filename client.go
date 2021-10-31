@@ -26,7 +26,7 @@ type Client struct {
 
 func (c *Client) Start(wg *sync.WaitGroup, opt Options) {
 	// get websocket
-	url := fmt.Sprintf("ws://%s/%s", opt.Hostname, c.PublicKeyHash)
+	url := fmt.Sprintf("ws://%s/%s", opt.Host, c.PublicKeyHash)
 	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		log.Fatal("Error connecting to Websocket Server:", err)
@@ -85,17 +85,11 @@ func (c *Client) Start(wg *sync.WaitGroup, opt Options) {
 
 	// send messages
 	for i := 0; i < opt.MessageCount; i++ {
-		url := fmt.Sprintf("http://%s/%s", opt.Hostname, c.Contact.PublicKeyHash)
+		url := fmt.Sprintf("http://%s/%s", opt.Host, c.Contact.PublicKeyHash)
 		r := strings.NewReader(MESSAGE)
-		resp, err := http.Post(url, "text/plain", r)
+		resp, _ := http.Post(url, "text/plain", r)
+		//conn.ReadMessage()
 		resp.Body.Close()
-		if err != nil {
-			log.Println(err)
-		}
-		_, _, err = conn.ReadMessage()
-		if err != nil {
-			log.Println(err)
-		}
 		if opt.MessageWait > 0 {
 			time.Sleep(time.Duration(opt.MessageWait) * time.Millisecond)
 		}
