@@ -62,9 +62,8 @@ func main() {
 		// start each client
 		wg.Add(1)
 		go clients[i].Start(&wg, opt)
-		// sleep to prevent auth issues
-		// try to find a solution that handles concurrent auth better,
-		// with a low challenge limit
+		// sleep to prevent all clients connecting at once
+		// this is due to an auth issue with go-npchat, which must be solved
 		time.Sleep(time.Millisecond * 500)
 	}
 	wg.Wait()
