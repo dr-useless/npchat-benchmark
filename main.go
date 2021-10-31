@@ -62,9 +62,13 @@ func main() {
 		// start each client
 		wg.Add(1)
 		go clients[i].Start(&wg, opt)
+		// sleep to prevent auth issues
+		// try to find a solution that handles concurrent auth better,
+		// with a low challenge limit
+		time.Sleep(time.Millisecond * 500)
 	}
 	wg.Wait()
 	tEnd := time.Now()
 	duration := tEnd.Sub(tStart)
-	log.Println("test ran in", duration.Seconds(), "seconds")
+	log.Println("ran in", duration.Seconds(), "seconds")
 }
