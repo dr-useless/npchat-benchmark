@@ -25,14 +25,12 @@ type Client struct {
 }
 
 func (c *Client) Start(wg *sync.WaitGroup, opt Options) {
-	defer wg.Done()
 	// get websocket
 	url := fmt.Sprintf("ws://%s/%s", opt.Hostname, c.PublicKeyHash)
 	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 	if err != nil {
 		log.Fatal("Error connecting to Websocket Server:", err)
 	}
-	defer conn.Close()
 
 	gc := GetMessage{Get: "challenge"}
 	gcJson, _ := json.Marshal(gc)
@@ -94,7 +92,6 @@ func (c *Client) Start(wg *sync.WaitGroup, opt Options) {
 		if err != nil {
 			log.Println(err)
 		}
-		fmt.Printf("%s %v\n", c.PublicKeyHash, resp.StatusCode)
 		_, _, err = conn.ReadMessage()
 		if err != nil {
 			log.Println(err)
@@ -103,8 +100,7 @@ func (c *Client) Start(wg *sync.WaitGroup, opt Options) {
 			time.Sleep(time.Duration(opt.MessageWait) * time.Millisecond)
 		}
 	}
-	err = conn.Close()
-	if err != nil {
-		log.Println(err)
-	}
+	fmt.Printf("%v sent %v messages\n", c.PublicKeyHash, opt.MessageCount)
+	conn.Close()
+	wg.Done()
 }
